@@ -99,6 +99,36 @@ app.delete('/students/:id', async (req, res) => {
   res.json({ message: '삭제 완료' });
 });
 
+// 점수 입력
+app.post('/scores', async (req, res) => {
+  const student_id = req.body.student_id;
+  const subject = req.body.subject;
+  const score = req.body.score;
+  const [result] = await pool.query(
+    'INSERT INTO scores (student_id, subject, score) VALUES (?, ?, ?)',
+    [student_id, subject, score]
+  );
+  res.json({ id: result.insertId, student_id: student_id, subject: subject, score: score });
+});
+
+// 점수 수정
+app.put('/scores/:id', async (req, res) => {
+  const id = req.params.id;
+  const score = req.body.score;
+  await pool.query(
+    'UPDATE scores SET score = ? WHERE id = ?',
+    [score, id]
+  );
+  res.json({ message: '점수 수정 완료' });
+});
+
+// 점수 삭제
+app.delete('/scores/:id', async (req, res) => {
+  const id = req.params.id;
+  await pool.query('DELETE FROM scores WHERE id = ?', [id]);
+  res.json({ message: '점수 삭제 완료' });
+});
+
 // 서버 연결 확인
 app.get('/health', async (req, res) => {
   res.json({ status: 'ok' });
