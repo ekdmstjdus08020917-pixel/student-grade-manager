@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>학생 성적 관리 시스템</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 30px;
+      background-color: #fffdf5;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #e8a020;
+      font-size: 28px;
+      margin-bottom: 40px;
+      letter-spacing: 2px;
+    }
+
+    h2 {
+      color: #e8a020;
+      font-size: 18px;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #f5d98b;
+      padding-bottom: 8px;
+    }
+
+    .section {
+      background: #ffffff;
+      border: 1px solid #f5d98b;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(232, 160, 32, 0.1);
+    }
+
+    input, select {
+      padding: 10px;
+      margin: 5px;
+      border: 1px solid #f5d98b;
+      border-radius: 8px;
+      width: 200px;
+      background: #fffdf5;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      background: #e8a020;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    button.delete {
+      background: #f4a261;
+      font-size: 12px;
+      padding: 6px 12px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 15px;
+    }
+
+    th {
+      background: #f5d98b;
+      color: #7a5c00;
+      padding: 12px;
+      text-align: center;
+    }
+
+    td {
+      border: 1px solid #f5d98b;
+      padding: 10px;
+      text-align: center;
+      background: #fffdf5;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌞 학생 성적 관리 시스템</h1>
+
+  <!-- 학생 등록 폼 -->
+  <div class="section">
+    <h2>학생 등록</h2>
+    <input type="text" id="name" placeholder="이름">
+    <input type="text" id="student_number" placeholder="학번">
+    <button onclick="addStudent()">등록</button>
+  </div>
+
+  <!-- 점수 입력 폼 -->
+  <div class="section">
+    <h2>점수 입력</h2>
+    <select id="student_id">
+      <option value="">학생 선택</option>
+    </select>
+    <input type="text" id="subject" placeholder="과목명">
+    <input type="number" id="score" placeholder="점수">
+    <button onclick="addScore()">점수 입력</button>
+  </div>
+
+  <!-- 성적 조회 화면 -->
+  <div class="section">
+    <h2>성적 조회</h2>
+    <button onclick="loadStudents()">조회</button>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>이름</th>
+          <th>학번</th>
+          <th>평균</th>
+          <th>등급</th>
+          <th>관리</th>
+        </tr>
+      </thead>
+      <tbody id="studentTable"></tbody>
+    </table>
+  </div>
+
+  <script>
+    // 페이지 로드 시 학생 목록 불러오기
+    window.onload = function() {
+      loadStudents();
+    };
+
+    // 전체 학생 조회 후 테이블
+    async function loadStudents() {
+      const res = await fetch('/students');
+      const students = await res.json();
+      const tbody = document.getElementById('studentTable');
+      tbody.innerHTML = '';
+
+      const select = document.getElementById('student_id');
+      select.innerHTML = '<option value="">학생 선택</option>';
+
+      for (let i = 0; i < students.length; i++) {
+        const s = students[i];
+
+        // 테이블에 학생 행 추가
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${s.id}</td>
+          <td>${s.name}</td>
+          <td>${s.student_number}</td>
+          <td>${s.average}</td>
+          <td>${s.grade}</td>
+          <td>
+            <button class="delete" onclick="deleteStudent(${s.id})">삭제</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+
+        // 점수 입력 셀렉트박스에 학생 추가
+        const option = document.createElement('option');
+        option.value = s.id;
+        option.textContent = s.name;
+        select.appendChild(option);
+      }
+    }
+
+    // 학생 등록
+    async function addStudent() {
+      const name = document.getElementById('name').value;
+      const student_number = document.getElementById('student_number').value;
+      await fetch('/students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, student_number: student_number })
+      });
+      loadStudents();
+    }
+
+    // 점수 입력
+    async function addScore() {
+      const student_id = document.getElementById('student_id').value;
+      const subject = document.getElementById('subject').value;
+      const score = document.getElementById('score').value;
+      await fetch('/scores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_id: student_id, subject: subject, score: score })
+      });
+      loadStudents();
+    }
+
+    // 학생 삭제
+    async function deleteStudent(id) {
+      await fetch('/students/' + id, { method: 'DELETE' });
+      loadStudents();
+    }
+  </script>
+
+</body>
+</html>
+
